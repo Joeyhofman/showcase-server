@@ -8,5 +8,7 @@ using MediatR;
 
 namespace Application.ContactForm.Commands.SendMessage
 {
-    public record SendMessageCommand(string Email, string Message) : IRequest<Domain.Entities.ContactForm>;
+    public record SendMessageCommand(string FirstName, string LastName, string Email, string PhoneNumber, string Subject, string Message) : IRequest<Domain.Entities.ContactForm>
+    {
+    }
 }
