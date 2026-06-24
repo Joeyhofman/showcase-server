@@ -1,19 +1,41 @@
-name: Build and Push Backend Image
+name: Build, Test, and Push Backend Image
 
 on:
   push:
     branches: ["main"]
 
 jobs:
-  build-and-push:
+  build-test-push:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
+
     steps:
-      - name: Checkout code
+      # 1. Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Setup .NET
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # 3. Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # 4. Build (fail fast if compile errors exist)
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      # 5. Run tests (THIS is your new gate)
+      - name: Run tests
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+      # 6. Log in to GHCR
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -21,13 +43,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 7. Extract metadata
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/joeyhofman/showcase-server
 
-      - name: Build and push image
+      # 8. Build and push Docker image
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
