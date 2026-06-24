@@ -66,7 +66,7 @@ namespace API.Controllers
             var user  = await getLoggedInUser();
             var comamnd = new CreateProjectCommand(Guid.NewGuid(), user, createProjectRequest.Name, createProjectRequest.Description);
 
-            var createdProejct = _mediator.Send(comamnd);
+            var createdProejct = await _mediator.Send(comamnd);
 
 
             return Ok(createdProejct);
@@ -79,14 +79,14 @@ namespace API.Controllers
         {
             var projectsQuery = new GetProjectForUserQuery(await getLoggedInUser());
 
-            var projects = _mediator.Send(projectsQuery);
+            var projects = await _mediator.Send(projectsQuery);
             return Ok(projects);
         }
 
         [Authorize]
         [HttpDelete]
         [Route("/projects/{id:Guid}")]
-        public async Task<IActionResult> GetProjects(Guid id)
+        public async Task<IActionResult> DeleteProject(Guid id)
         {
             var deleteprojectCommand = new DeleteProjectCommand(id);
 

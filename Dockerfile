@@ -1,5 +1,9 @@
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ENV ContinuousIntegrationBuild=true
+ENV BuildProjectReferences=true
+ENV DisableGitVersionTask=true
+ENV EnableSourceControlManagerQueries=false
 WORKDIR /src
 
 # Copy project files first for better layer caching
@@ -16,7 +20,11 @@ COPY . .
 
 # Publish API
 WORKDIR /src/API
-RUN dotnet publish API.csproj -c Release -o /app/publish
+RUN dotnet publish API.csproj \
+    -c Release \
+    -o /app/publish \
+    /p:EnableSourceControlManagerQueries=false \
+    /p:SourceLinkCreate=false
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0

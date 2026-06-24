@@ -29,7 +29,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddExceptionHandler<ExceptionHandler>();
-builder.Services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(Environment.GetEnvironmentVariable("DIAGRAM_CONNECTION_STRING")));
 builder.Services.AddSignalR();
 
 //infrastructure
@@ -68,7 +68,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigin",
         builder =>
         {
-            builder.WithOrigins("http://localhost:3000")
+            builder.WithOrigins("http://localhost:3000", "https://diagramming.com")
                    .AllowAnyHeader()
                    .AllowAnyMethod()
                    .AllowCredentials();

@@ -1,8 +1,41 @@
-version: '3.4'
-
 services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: diagram-backend
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    expose:
+      - "5432"
+
   api:
-    image: ${DOCKER_REGISTRY-}api
     build:
       context: .
-      dockerfile: API/Dockerfile
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+
+    environment:
+      DIAGRAM_CONNECTION_STRING: Host=db;Port=5432;Database=diagram-backend;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SslMode=Disable
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    ports:
+      - "80:8080"
+
+volumes:
+  pgdata:
