@@ -1,64 +1,38 @@
-name: ASP.NET Web API Deployment
+name: Build and Push Backend Image
 
 on:
   push:
-    branches:
-      - main
+    branches: ["main"]
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-    
-    steps:
-    - name: Build
-
-on:
-  push:
-    branches:
-      - '*'
-      - '*/*'
-      - '**'
-      - '!main'
-  workflow_dispatch:
-
-concurrency: 
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest    
-
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          dotnet-version: '8.0.1'
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build ASP.NET Web API
-      run: dotnet build ./API/API.csproj
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/joeyhofman/showcase-server
 
-    - name: Publish ASP.NET Web API
-      run: dotnet publish <path-to-your-project> --configuration Release --output ${{ github.workspace }}/publish
-
-    - name: Copy files to server
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        source: '${{ github.workspace }}/publish/*'
-        target: '/var/www/nginx/wwwroot/'
-
-    - name: SSH into server and restart Nginx
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: ${{ secrets.SERVER_SSH_PORT }}
-        script: 'sudo systemctl restart nginx'
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/joeyhofman/showcase-server:latest
+            ghcr.io/joeyhofman/showcase-server:${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
