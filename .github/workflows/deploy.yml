@@ -27,7 +27,7 @@ jobs:
         run: dotnet restore
 
       - name: Package vulnerability scan
-        run: dotnet list package --vulnerable --include-transitive
+        run: dotnet list package --vulnerable --include-transitive | grep -E "High|Critical" && exit 1 || exit 0
 
       - name: Build
         run: dotnet build --no-restore --configuration Release
