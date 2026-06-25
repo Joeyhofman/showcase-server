@@ -68,7 +68,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigin",
         builder =>
         {
-            builder.WithOrigins("http://localhost:3000", "https://diagramming.com")
+            builder.WithOrigins("http://localhost:3000", "https://diagramming.com", "https://acceptance.diagramming.com")
                    .AllowAnyHeader()
                    .AllowAnyMethod()
                    .AllowCredentials();
