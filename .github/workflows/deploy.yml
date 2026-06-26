@@ -1,63 +1,79 @@
-name: Build, Test, and Push Backend Image
+name: Backend CI/CD
 
 on:
   push:
     branches:
       - main
-      - develop
-      - "release/**"
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: joeyhofman/showcase-server
 
 jobs:
-  build-test-push:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: 8.0.x
+      - run: dotnet restore
+      - run: dotnet list package --vulnerable --include-transitive
+      - run: dotnet build --configuration Release --no-restore
+      - run: dotnet test --configuration Release --no-build
 
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Package vulnerability scan
-        run: dotnet list package --vulnerable --include-transitive
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Run tests
-        run: dotnet test --no-build --configuration Release --verbosity normal
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set Environment Tag
-        id: env-tag
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "tag=prod-latest" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/heads/release/* ]]; then
-            echo "tag=acceptance" >> $GITHUB_OUTPUT
-          elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
-            echo "tag=test" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build and push Docker image
+      - id: build
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/joeyhofman/showcase-server:${{ steps.env-tag.outputs.tag }}
-            ghcr.io/joeyhofman/showcase-server:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+  acceptance:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: Acceptance
+      url: https://acceptance.diagramming.com
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: imjasonh/setup-crane@v0.4
+      - run: |
+          crane tag \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.digest }} \
+            development
+  production:
+    needs: acceptance
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
+      url: https://diagramming.com
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: imjasonh/setup-crane@v0.4
+      - run: |
+          crane tag \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.digest }} \
+            production
