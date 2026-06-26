@@ -59,7 +59,7 @@ jobs:
       - run: |
           crane tag \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.digest }} \
-            development
+            acceptance
   production:
     needs: acceptance
     runs-on: ubuntu-latest
