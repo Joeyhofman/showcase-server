@@ -61,7 +61,9 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.digest }} \
             acceptance
   production:
-    needs: acceptance
+    needs:
+      - build
+      - acceptance
     runs-on: ubuntu-latest
     environment:
       name: Production
