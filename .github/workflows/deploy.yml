@@ -43,8 +43,27 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-  acceptance:
+  test:
     needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: Test
+      url: https://test.diagramming.com
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: imjasonh/setup-crane@v0.4
+      - run: |
+          crane tag \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.digest }} \
+            test
+  acceptance:
+    needs:
+      - build
+      - test
     runs-on: ubuntu-latest
     environment:
       name: Acceptance
@@ -63,6 +82,7 @@ jobs:
   production:
     needs:
       - build
+      - test
       - acceptance
     runs-on: ubuntu-latest
     environment:
