@@ -88,7 +88,8 @@ namespace API.Controllers
         [Route("/projects/{id:Guid}")]
         public async Task<IActionResult> DeleteProject(Guid id)
         {
-            var deleteprojectCommand = new DeleteProjectCommand(id);
+            var user = await getLoggedInUser();
+            var deleteprojectCommand = new DeleteProjectCommand(id, user.Id);
 
             var deleted = await  _mediator.Send(deleteprojectCommand);
             return Ok(deleted);

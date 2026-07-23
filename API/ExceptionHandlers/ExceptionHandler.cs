@@ -28,7 +28,9 @@ namespace API.ExceptionHandlers
                 problemDetails.Extensions.Add("errors", validationException.Errors);
                 httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await httpContext.Response.WriteAsJsonAsync(problemDetails);
-                _logger.LogError($"{nameof(validationException)} occurred at {DateTime.UtcNow}");
+                _logger.LogWarning(
+                    validationException,
+                    "Validation failed for request");
                 return true;
             }
             else if (exception.InnerException is DomainException domainException)
@@ -42,8 +44,13 @@ namespace API.ExceptionHandlers
                 };
 
                 httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                _logger.LogWarning(
+                    domainException,
+                    "Domain rule violation occurred");
                 await httpContext.Response.WriteAsJsonAsync(problemDetails);
-                _logger.LogError($"{nameof(domainException)} occurred at {DateTime.UtcNow}");
+                _logger.LogError(
+                    exception,
+                    "Unhandled exception occurred while processing request");
                 return true;
             }
             else

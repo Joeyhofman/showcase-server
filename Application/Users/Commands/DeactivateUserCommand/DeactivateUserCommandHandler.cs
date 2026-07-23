@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Domain.Exceptions.Users;
 using Domain.Interfaces.Repositories;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Users.Commands.DeactivateUserCommand
 {
@@ -13,11 +14,13 @@ namespace Application.Users.Commands.DeactivateUserCommand
     {
         private readonly IUserRepository _userRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ILogger<DeactivateUserCommandHandler> _logger;
 
-        public DeactivateUserCommandHandler(IUserRepository userRepository, IUnitOfWork unitOfWork)
+        public DeactivateUserCommandHandler(IUserRepository userRepository, ILogger<DeactivateUserCommandHandler> logger, IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
             _unitOfWork = unitOfWork;
+            _logger = logger;
         }
 
         public async Task<Unit> Handle(DeactivateUserCommand request, CancellationToken cancellationToken)
@@ -32,6 +35,10 @@ namespace Application.Users.Commands.DeactivateUserCommand
             userToUpdate.LockoutEnabled = !userToUpdate.LockoutEnabled;
 
             await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "User deactivated successfully. TargetUserId: {TargetUserId}",
+                userToUpdate.Id);
 
             return Unit.Value;
         }

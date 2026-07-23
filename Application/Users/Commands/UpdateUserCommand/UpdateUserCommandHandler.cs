@@ -7,6 +7,7 @@ using Domain.Entities;
 using Domain.Exceptions.Users;
 using Domain.Interfaces.Repositories;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Users.Commands.UpdateUserCommand
 {
@@ -15,19 +16,29 @@ namespace Application.Users.Commands.UpdateUserCommand
 
         private readonly IUserRepository _userRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ILogger<UpdateUserCommandHandler> _logger;
 
-        public UpdateUserCommandHandler(IUserRepository userRepository, IUnitOfWork unitOfWork)
+        public UpdateUserCommandHandler(IUserRepository userRepository, ILogger<UpdateUserCommandHandler> logger, IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
+            _logger = logger;
             _unitOfWork = unitOfWork;
         }
 
         public async Task<Unit> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
         {
+            _logger.LogInformation(
+                "Updating user {UserId}",
+                request.id
+            );
             var userToUpdate = await _userRepository.getByIdAsync(request.id);
 
             if(userToUpdate == null)
             {
+                _logger.LogWarning(
+                        "User update failed. User {UserId} was not found",
+                        request.id
+                    );
                 throw new UserNotFoundException("could not find user");
             }
 
@@ -46,6 +57,10 @@ namespace Application.Users.Commands.UpdateUserCommand
 
             await _unitOfWork.SaveChangesAsync();
 
+            _logger.LogInformation(
+                "User {UserId} successfully updated",
+                request.id
+            );
 
 
             return Unit.Value;

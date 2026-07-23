@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Application.Projects.Commands.DeleteProjectCommand
 {
-    public record DeleteProjectCommand(Guid Id) : IRequest<Guid>
+    public record DeleteProjectCommand(Guid Id, Guid UserId) : IRequest<Guid>
     {
     }
 }

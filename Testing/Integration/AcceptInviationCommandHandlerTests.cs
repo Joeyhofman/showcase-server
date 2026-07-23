@@ -10,6 +10,7 @@ using Domain.Enumerations;
 using Domain.Exceptions.Invitations;
 using Domain.Exceptions.Projects;
 using Domain.Interfaces.Repositories;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Testing.Integration
@@ -21,6 +22,7 @@ namespace Testing.Integration
         private Mock<IInvitationRepository> _invitationRepositoryMock;
         private Mock<IUserRepository> _userRepositoryMock;
         private Mock<IUnitOfWork> _unitOfWorkMock;
+        private Mock<ILogger<AcceptInvitationCommandHandler>> _logger;
 
         public AcceptInviationCommandHandlerTests()
         {
@@ -28,6 +30,7 @@ namespace Testing.Integration
             _invitationRepositoryMock = new Mock<IInvitationRepository>();
             _userRepositoryMock = new Mock<IUserRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
+            _logger = new Mock<ILogger<AcceptInvitationCommandHandler>>();
         }
 
         [Fact]
@@ -49,7 +52,7 @@ namespace Testing.Integration
             _projectRepositoryMock.Setup(r => r.GetByIdAsync(project.Id)).ReturnsAsync(project);
             _userRepositoryMock.Setup(r => r.getByIdAsync(userToInvite.Id)).ReturnsAsync(userToInvite);
 
-            var handler = new AcceptInvitationCommandHandler(_invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _unitOfWorkMock.Object);
+            var handler = new AcceptInvitationCommandHandler(_invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _logger.Object, _unitOfWorkMock.Object);
             var command = new AcceptInvitationCommand(invitationId);
 
             // Act
@@ -79,7 +82,7 @@ namespace Testing.Integration
             _projectRepositoryMock = new Mock<IProjectRepository>();
             _projectRepositoryMock.Setup(r => r.GetByIdAsync(project.Id)).ReturnsAsync(project);
 
-            var handler = new AcceptInvitationCommandHandler(_invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _unitOfWorkMock.Object);
+            var handler = new AcceptInvitationCommandHandler(_invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _logger.Object, _unitOfWorkMock.Object);
             var command = new AcceptInvitationCommand(invitationId);
 
             // Act
@@ -102,7 +105,7 @@ namespace Testing.Integration
 
             _invitationRepositoryMock.Setup(r => r.GetByIdAsync(invitationId)).ReturnsAsync((Invitation)null);
 
-            var handler = new AcceptInvitationCommandHandler(_invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _unitOfWorkMock.Object);
+            var handler = new AcceptInvitationCommandHandler(_invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _logger.Object, _unitOfWorkMock.Object);
             var command = new AcceptInvitationCommand(invitationId);
 
             await Assert.ThrowsAsync<InvitationNotFoundException>(() => handler.Handle(command, CancellationToken.None));
@@ -122,13 +125,15 @@ namespace Testing.Integration
             _projectRepositoryMock = new Mock<IProjectRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
 
-            var handler = new AcceptInvitationCommandHandler(invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _unitOfWorkMock.Object);
+            var handler = new AcceptInvitationCommandHandler(_invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _logger.Object, _unitOfWorkMock.Object);
             var command = new AcceptInvitationCommand(invitationId);
 
 
             //act & Assert
             await Assert.ThrowsAsync<InvitationNotFoundException>(() => handler.Handle(command, CancellationToken.None));
-            _invitationRepositoryMock.Verify(r => r.GetByIdAsync(invitationId), Times.Never);
+            _invitationRepositoryMock.Verify(
+                r => r.GetByIdAsync(invitationId), 
+                Times.Once);
             _userRepositoryMock.VerifyNoOtherCalls();
             _projectRepositoryMock.VerifyNoOtherCalls();
             _unitOfWorkMock.VerifyNoOtherCalls();
@@ -152,7 +157,7 @@ namespace Testing.Integration
             _projectRepositoryMock = new Mock<IProjectRepository>();
             _projectRepositoryMock.Setup(r => r.GetByIdAsync(project.Id)).ReturnsAsync(project);
 
-            var handler = new AcceptInvitationCommandHandler(_invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _unitOfWorkMock.Object);
+            var handler = new AcceptInvitationCommandHandler(_invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _logger.Object, _unitOfWorkMock.Object);
             var command = new AcceptInvitationCommand(invitationId);
 
             // Act
@@ -187,7 +192,7 @@ namespace Testing.Integration
 
             _unitOfWorkMock = new Mock<IUnitOfWork>();
 
-            var handler = new AcceptInvitationCommandHandler(_invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _unitOfWorkMock.Object);
+            var handler = new AcceptInvitationCommandHandler(_invitationRepositoryMock.Object, _userRepositoryMock.Object, _projectRepositoryMock.Object, _logger.Object, _unitOfWorkMock.Object);
             var command = new AcceptInvitationCommand(invitationId);
 
             // Act

@@ -6,6 +6,7 @@ using System.Security.Claims;
 using API;
 using API.ExceptionHandlers;
 using API.Hubs;
+using API.Middleware;
 using Application.Behavours;
 using Application.ContactForm.Commands.SendMessage;
 using Application.Validators;
@@ -23,10 +24,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog((context, loggerConfig) => loggerConfig.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddExceptionHandler<ExceptionHandler>();
 builder.Services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(Environment.GetEnvironmentVariable("DIAGRAM_CONNECTION_STRING")));
@@ -110,7 +113,14 @@ app.MapGet("/time", () =>
 });
 
 
+
+app.UseSerilogRequestLogging();
+app.UseMiddleware<RequestContextMiddleware>();
+app.UseMiddleware<UserLoggingMiddleware>();
+app.UseMiddleware<AuthenticationAuditMiddleware>();
+
 app.UseExceptionHandler(_ => { });
+
 
 
 app.UseHttpsRedirection();
