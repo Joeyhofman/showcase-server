@@ -3,10 +3,12 @@ using FluentValidation;
 using Ganss.Xss;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Security.Application;
 
 namespace API.Controllers
 {
+    [EnableRateLimiting("api")]
     public class ContactController : Controller
     {
         private readonly IMediator _mediator;

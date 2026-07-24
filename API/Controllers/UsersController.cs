@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -20,6 +21,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 namespace API.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("api")]
     [Route("[controller]")]
     public class UsersController : ControllerBase
     {

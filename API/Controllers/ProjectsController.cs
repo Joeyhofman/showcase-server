@@ -21,10 +21,12 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace API.Controllers
 {
     
+    [EnableRateLimiting("api")]
     public class ProjectsController : Controller
     {
         private readonly IMediator _mediator;
