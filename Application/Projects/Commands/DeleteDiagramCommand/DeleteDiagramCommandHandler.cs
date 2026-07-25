@@ -38,6 +38,16 @@ namespace Application.Projects.Commands.DeleteDiagramCommand
                 throw new ProjectNotFoundException("project not found");
             }
 
+            if (!project.IsMember(request.userId))
+            {
+                _logger.LogWarning(
+                    "Diagram deletion denied. User {UserId} is not a member of project {ProjectId}.",
+                    request.userId,
+                    project.Id);
+
+                throw new DataflowDiagramAccessViolationException("");
+            }
+
             var diagram = await _dataflowRepository.GetById(request.DigramId);
             if(diagram is null)
             {
@@ -45,6 +55,12 @@ namespace Application.Projects.Commands.DeleteDiagramCommand
                     "Diagram deletion failed. Diagram {DiagramId} not found",
                     request.DigramId
                 );
+                throw new DataflowDiagramNotFoundException("daigram not found");
+            }
+
+            if(!project.Diagrams.Any(x => x.Id == request.DigramId))
+            {
+                _logger.LogWarning("Diagram deletion failed. Digram {DiagramId} not part of project.", request.DigramId);
                 throw new DataflowDiagramNotFoundException("daigram not found");
             }
 
