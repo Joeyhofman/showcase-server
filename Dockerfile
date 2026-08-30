@@ -32,6 +32,8 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
+USER app
+
 EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "API.dll"]
