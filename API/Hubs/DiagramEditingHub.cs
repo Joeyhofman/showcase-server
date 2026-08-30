@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore.Update.Internal;
 
 namespace API.Hubs
 {
+    [Authorize]
     public class DiagramEditingHub : Hub
     {
 
@@ -77,35 +78,50 @@ namespace API.Hubs
 
         public async Task SetupEditing(string projectId, string diagramId)
         {
-            try
+            if (!Guid.TryParse(projectId, out var projectGuid) || !Guid.TryParse(diagramId, out var diagramGuid))
             {
-                string groupName = $"{projectId}-{diagramId}";
-
-                await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-
-                var diagram = await _dataflowDiagramRepository.GetById(Guid.Parse(diagramId));
-                if(diagram is null)
-                {
-                    throw new DataflowDiagramNotFoundException("could not find dataflow diagram");
-                }
-
-
-                if(!_sessions.ContainsKey(groupName))
-                {
-                    _sessions.Add(groupName, diagram);
-                    await Clients.All.SendAsync("DiagramSync", diagram);
-                }
-                else
-                {
-                    await Clients.All.SendAsync("DiagramSync", _sessions[groupName]);
-                }
-            }
-            catch (Exception ex)
-            {
-                await Console.Out.WriteLineAsync("test");
-                throw ex;
+                throw new HubException("Invalid project or diagram ID.");
             }
 
+            var user = await getLoggedInUser();
+
+            if (user is null)
+            {
+                throw new HubException("User is not authenticated.");
+            }
+
+            var project = await _projectRepository.GetByIdAsync(projectGuid);
+
+            if (project is null)
+            {
+                throw new HubException("Project not found.");
+            }
+
+            if (!project.IsMember(user.Id))
+            {
+                throw new HubException("You are not a member of this project.");
+            }
+
+            var diagram = await _dataflowDiagramRepository.GetById(diagramGuid);
+
+            if (diagram is null)
+            {
+                throw new DataflowDiagramNotFoundException(
+                    "Could not find dataflow diagram");
+            }
+
+            var groupName = $"{projectGuid}-{diagramGuid}";
+
+            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+
+            if (!_sessions.ContainsKey(groupName))
+            {
+                _sessions.Add(groupName, diagram);
+            }
+
+            await Clients.Caller.SendAsync(
+                "DiagramSync",
+                _sessions[groupName]);
         }
 
         private async Task<User> getLoggedInUser()
