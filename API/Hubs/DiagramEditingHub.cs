@@ -87,19 +87,19 @@ namespace API.Hubs
 
             if (user is null)
             {
-                throw new HubException("User is not authenticated.");
+                throw new ApplicationException("User is not authenticated.");
             }
 
             var project = await _projectRepository.GetByIdAsync(projectGuid);
 
             if (project is null)
             {
-                throw new HubException("Project not found.");
+                throw new ApplicationException("Project not found.");
             }
 
             if (!project.IsMember(user.Id))
             {
-                throw new HubException("You are not a member of this project.");
+                throw new ApplicationException("You are not a member of this project.");
             }
 
             var diagram = await _dataflowDiagramRepository.GetById(diagramGuid);
