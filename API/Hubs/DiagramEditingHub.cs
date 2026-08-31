@@ -59,8 +59,8 @@ namespace API.Hubs
                 Width = 150,
                 Height = 150,
                 Classname = "Data Point",
-                Color = "red",
-                fillColor = "red",
+                Color = "rgb(63,83,217)",
+                fillColor = "rgb(63,83,217)",
                 InputValue = "Data Point",
                 isEditing = false
             };
@@ -80,7 +80,7 @@ namespace API.Hubs
         {
             if (!Guid.TryParse(projectId, out var projectGuid) || !Guid.TryParse(diagramId, out var diagramGuid))
             {
-                throw new HubException("Invalid project or diagram ID.");
+                throw new ApplicationException("Invalid project or diagram ID.");
             }
 
             var user = await getLoggedInUser();
