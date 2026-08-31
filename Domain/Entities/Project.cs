@@ -49,9 +49,8 @@ namespace Domain.Entities
 
         public bool IsMember(Guid userID)
         {
-            var isMember = ProjectMembers.Any(u => u.Id == userID);
-            var isOwner = (userID == Owner.Id);
-            return (!isMember || !isOwner);
+            return ProjectMembers.Any(u => u.Id == userID)
+           || userID == Owner.Id;
         }
         
         public void RemoveMember(User projectMember)
